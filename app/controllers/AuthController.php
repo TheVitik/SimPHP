@@ -72,19 +72,12 @@ class AuthController extends Controller{
     private function doRegister(){
         $this->checkRegister();
         if($this->status()){
-            /* MYSQL
             $stmt = $this->db->prepare("INSERT INTO users VALUES(null,?,?,?,?,NOW())");
             $stmt->bind_param("ssss",$_POST['firstname'],$_POST['lastname'],$_POST['email'],md5($_POST['password']));
             $stmt->execute();
             if($this->db->error){
                 array_push($this->errors, "Помилка сервера, спробуйте пізніше");
                 return False;
-            }
-            */
-            // ODBC
-            $stmt = odbc_prepare($this->db,"INSERT INTO users VALUES(null,?,?,?,?,NOW())");
-            if(!odbc_execute($stmt, array($_POST['firstname'],$_POST['lastname'],$_POST['email'],md5($_POST['password'])))) {
-                array_push($this->errors, "Помилка сервера, спробуйте пізніше");
             }
             return True;
         }
@@ -104,24 +97,12 @@ class AuthController extends Controller{
         /*if(!filter_val($_POST['email'],FILTER_VALIDATE_EMAIL)){
             array_push($this->errors, "Формат пошти неправильний");
         }*/
-        /* MYSQL
         $stmt = $this->db->prepare("SELECT id FROM users WHERE email=?");
         $stmt->bind_param("s",$_POST['email']);
         $stmt->execute();
         $response = $stmt->get_result();
         if($user = $response->fetch_array()){
             array_push($this->errors, "Пошта вже зайнята");
-        }
-        */
-        // ODBC
-        $stmt = odbc_prepare($this->db,"SELECT id FROM users WHERE email=?");
-        if(!odbc_execute($stmt, array($_POST['email']))) {
-            array_push($this->errors, "Помилка сервера, спробуйте пізніше");
-        }
-        else{
-            if($user = odbc_fetch_array($stmt)){
-                array_push($this->errors, "Пошта вже зайнята");
-            }
         }
     }
 
@@ -140,7 +121,6 @@ class AuthController extends Controller{
             return;
         }
         $user = null;
-        /* MYSQL
         $stmt = $this->db->prepare("SELECT * FROM users WHERE email=?");
         $stmt->bind_param("s",$_POST['email']);
         $stmt->execute();
@@ -154,25 +134,6 @@ class AuthController extends Controller{
             }
             else{
                 $this->data = $user;
-            }
-        }
-        */
-        // ODBC
-        $stmt = odbc_prepare($this->db,"SELECT * FROM users WHERE email=?");
-        if(!odbc_execute($stmt, array($_POST['email']))) {
-            array_push($this->errors, "Помилка сервера, спробуйте пізніше");
-        }
-        else{
-            if(!$user = odbc_fetch_array($stmt)){
-                array_push($this->errors, "Акаунт не існує");
-            }
-            else{
-                if(md5($_POST['password'])!==$user['password']){
-                    array_push($this->errors, "Пароль неправильний");
-                }
-                else{
-                    $this->data = $user;
-                }
             }
         }
     }

@@ -11,15 +11,8 @@ class AccountController extends Controller{
         $user = unserialize($_SESSION['user']);
         $id = $user->id;
         $applications = array();
-        /* MYSQL
         $res = $this->db->query("SELECT concat(users.firstname,' ',users.lastname) as username, applications.visit_date, doctors.type FROM applications INNER JOIN users ON users.id=applications.user_id INNER JOIN doctors ON doctors.id=applications.doctor_id WHERE users.id=$id ORDER BY applications.id DESC");
         while($application = $res->fetch_array()){
-            array_push($applications,$application);
-        }
-        */
-        // ODBC
-        $res = odbc_exec($this->db,"SELECT concat(users.firstname,' ',users.lastname) as username, applications.visit_date, doctors.type FROM applications INNER JOIN users ON users.id=applications.user_id INNER JOIN doctors ON doctors.id=applications.doctor_id WHERE users.id=$id ORDER BY applications.id DESC");
-        while($application = odbc_fetch_array($res)){
             array_push($applications,$application);
         }
         $this->process->show("account",[
@@ -30,15 +23,8 @@ class AccountController extends Controller{
     //Return register view
     public function create(){
         $doctors = array();
-        /* MYSQL
         $res = $this->db->query("SELECT * FROM doctors ORDER BY type");
         while($doctor = $res->fetch_array()){
-            array_push($doctors,$doctor);
-        }
-        */
-        // ODBC
-        $res = odbc_exec($this->db,"SELECT * FROM doctors ORDER BY type");
-        while($doctor = odbc_fetch_array($res)){
             array_push($doctors,$doctor);
         }
         $this->process->show("create",[
@@ -48,16 +34,8 @@ class AccountController extends Controller{
 
     public function newApplication(){
         $doctors = array();
-        /* MYSQL
         $res = $this->db->query("SELECT * FROM doctors ORDER BY type");
-        
         while($doctor = $res->fetch_array()){
-            array_push($doctors,$doctor);
-        }
-        */
-        // ODBC
-        $res = odbc_exec($this->db,"SELECT * FROM doctors ORDER BY type");
-        while($doctor = odbc_fetch_array($res)){
             array_push($doctors,$doctor);
         }
         if(!$this->makeApplication()){
@@ -106,18 +84,10 @@ class AccountController extends Controller{
         $this->checkApplication();
         if($this->status()){
             $user = unserialize($_SESSION['user']);
-            /* MYSQL
             $stmt = $this->db->prepare("INSERT INTO applications VALUES(null,?,?,?,?,NOW())");
             $stmt->bind_param("ssss",$user->id,$_POST['doctor'],$_POST['phone'],$_POST['visit_date']);
             $stmt->execute();
             if($this->db->error){
-                array_push($this->errors, "Помилка сервера, спробуйте пізніше");
-                return False;
-            }
-            */
-            // ODBC
-            $stmt = odbc_prepare($this->db,"INSERT INTO applications VALUES(null,?,?,?,?,NOW())");
-            if(!odbc_execute($stmt, array($user->id,$_POST['doctor'],$_POST['phone'],$_POST['visit_date']))) {
                 array_push($this->errors, "Помилка сервера, спробуйте пізніше");
                 return False;
             }

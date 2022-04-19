@@ -1,5 +1,6 @@
 <?php
 namespace App\Controllers;
+use Core\Database;
 use Core\Default\Controller;
 use App\Models\User;
 require_once("app/models/User.php");
@@ -12,17 +13,10 @@ class AdminController extends Controller{
         if(!empty($_GET['search'])){
             $pattern = "%".$_GET['search']."%";
         }
-        $applications = array();
-        /* MYSQL
-        $res = $this->db->query("SELECT concat(users.firstname,' ',users.lastname) username, applications.visit_date, doctors.type FROM applications INNER JOIN users ON users.id=applications.user_id INNER JOIN doctors ON doctors.id=applications.doctor_id HAVING username LIKE '$pattern' ORDER BY applications.id DESC");
-        while($application = $res->fetch_array()){
-            array_push($applications,$application);
-        }
-        */
-        $res = odbc_exec($this->db,"SELECT concat(users.firstname,' ',users.lastname) username, applications.visit_date, doctors.type FROM applications INNER JOIN users ON users.id=applications.user_id INNER JOIN doctors ON doctors.id=applications.doctor_id HAVING username LIKE '$pattern' ORDER BY applications.id DESC");
-        while($application = odbc_fetch_array($res)){
-            array_push($applications,$application);
-        }
+        $applications = Database::select("concat(users.firstname,' ',users.lastname) username, applications.visit_date, doctors.type")
+            ->from("applications")->innerJoin("users")->on("users.id=applications.user_id")->innerJoin("doctors")->on("doctors.id=applications.doctor_id")->execute()->fetchArray();
+        echo $applications::queryString();
+        //$applications = Database::query("SELECT concat(users.firstname,' ',users.lastname) username, applications.visit_date, doctors.type FROM applications INNER JOIN users ON users.id=applications.user_id INNER JOIN doctors ON doctors.id=applications.doctor_id HAVING username LIKE '$pattern' ORDER BY applications.id DESC")->fetchArray();
         $this->process->show("admin",[
             "applications"=>$applications
         ]);
@@ -34,14 +28,10 @@ class AdminController extends Controller{
     }
     //POST
     public function addDoctor(){
-        /* MYSQL
         $stmt = $this->db->prepare("INSERT INTO doctors VALUES(null,null,?,NOW())");
         $stmt->bind_param("s",$_POST['type']);
         $stmt->execute();
-        */
-        // ODBC
-        $stmt = odbc_prepare($this->db,"INSERT INTO doctors VALUES(null,null,?,NOW())");
-        if(!odbc_execute($stmt, array($_POST['type']))) {
+        if($this->db->error){
             array_push($this->errors, "Помилка сервера, спробуйте пізніше");
         }
         $this->process->redirect("admin");
